@@ -1,74 +1,123 @@
-<?php
-// initialize errors variable
-$errors = "";
+<?php 
+	$update = false;
+	//intialize errors variable
+	$errors ="";
+	$task="";
+	$id = 0;
 
-// connect to database
-$db = mysqli_connect("localhost", "root", "niraj", "todolist");
+	//connection.
+	$db = mysqli_connect('localhost', 'root', 'niraj', 'todolist');
 
 
+	//on submit insert 
+	if (isset($_POST['submit'])) 
+	{
+		if(empty($_POST['Task']))
+		{
+			$errors = "You must fill in the task";
+		}
+		else
+		{
+			$task = $_POST['Task'];
+			mysqli_query($db, "INSERT INTO tasks (Task) VALUES ('$task')");
+			$_SESSION['message'] = "TASK SAVED"; 
+			//header('location: index.php');
+		}	
+	}
 
-// insert a quote if submit button is clicked
-if (isset($_POST['submit'])) {
-if (empty($_POST['task'])) {
-$errors = "You must fill in the task";
-}else{
-$task = $_POST['task'];
-$sql = "INSERT INTO tasks (task) VALUES ('$task')";
-mysqli_query($db, $sql);
-header('location: index.php');
-}
-}
-// delete task
-if (isset($_GET['del_task'])) {
-$id = $_GET['del_task'];
+	
+	//delete
+	if (isset($_GET['del'])) 
+	{
+		$id = $_GET['del'];
+		mysqli_query($db, "DELETE FROM tasks WHERE id=$id"); 
+		$_SESSION['message'] = "TASK DELETED SUCCESSFULLY";
+		//header('location: index.php');
+	}
 
-mysqli_query($db, "DELETE FROM tasks WHERE id=".$id);
-header('location: index.php');
-}
+	//EDIT
+	if (isset($_GET['edit'])) {
+		$id = $_GET['edit'];
+		$update = true;
+		$record = mysqli_query($db, "SELECT * FROM tasks WHERE id=$id");
+
+		if ($record ->num_rows == 1 ) {
+			$n = mysqli_fetch_array($record);
+			$task = $n['task'];
+			$_SESSION['message'] = "TASK FETCHED SUCCESSFULLY";
+		}
+	}
+
+	 //update
+	 if (isset($_POST['update'])) {
+        $id = $_POST['id'];
+        $task = $_POST['Task'];
+    
+        mysqli_query($db, "UPDATE tasks SET `Task`='$task' WHERE `id`=$id");
+		//header('location: index.php');
+		$_SESSION['message'] = "TASK UPDATED SUCCESSFULLY";
+    }
+
 
 ?>
+   
+
 <!DOCTYPE html>
 <html>
 <head>
-<title>ToDo List Application PHP and MySQL</title>
-<link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
+	<title>TO DO</title>
 </head>
 <body>
-<div class="heading">
-<h2 style="font-style: 'Hervetica';">ToDo List Application PHP and MySQL database</h2>
-</div>
-<!---form-->
-<form method="post" action="index.php" class="input_form">
-<?php if (isset($errors)) { ?>
-<p><?php echo $errors; ?></p>
-<input type="text" name="task" class="task_input">
-<button type="submit" name="submit" id="add_btn" class="add_btn">Add Task</button>
-</form>
-<table>
-<thead>
-<tr>
-<th>Sl.No</th>
-<th>Tasks</th>
-<th style="width: 60px;">Action</th>
-</tr>
-</thead>
+	<?php if (isset($_SESSION['message'])): ?>
+		<div class="msg">
+			<?php 
+				echo $_SESSION['message']; 
+				unset($_SESSION['message']);
+			?>
+		</div>
+	<?php endif ?>
+    <!---form-->
+    <form method="post" action="index.php" autocomplete="off" >
+		<div class="input-group">
+			<input type="hidden" name="id" value="<?php echo $id; ?>">
+			<label>Task:</label>
+			<input type="text" name="Task" value="<?php echo $task; ?>">
+		</div>
+		
+		<div class="input-group">
+			<?php if ($update == true): ?>
+                <button class="btn" type="submit" name="update" style = "background-color:blue">update</button>
+            <?php else: ?>
+				<button class="btn" type="submit" name="submit" style = "background-color:green">Add Task</button>
+			<?php endif ?>
+		</div>
+	</form>
 
-<tbody>
-<?php
-// select all tasks if page is visited or refreshed
-$tasks = mysqli_query($db, "SELECT * FROM tasks");
+    <table>
+        <thead>
+            <tr>
+                <th>S.No</th>
+                <th >Task</th>
+                <th colspan="2">Action</th>
+            </tr>
+        </thead>
+        
+        <?php 
+            $results = mysqli_query($db, "SELECT * FROM tasks"); 
+            $i = 1;while ($row = mysqli_fetch_array($results)) { ?>
+            <tr>
+                <td> <?php echo $i; ?> </td>
+                <td><?php echo $row['task']; ?></td>
+				<td>
+				    <a href="index.php?edit=<?php echo $row['id']; ?>" class="edit_btn" style="background-color:rgba(255, 99, 71, 0.5);color:black;">Edit</a>
+			    </td>
+                <td>
+                    <a href="index.php?del=<?php echo $row['id']; ?>" class="del_btn">Delete</a>
+                </td>
+            </tr>
+        <?php $i++; } ?>
+    </table>
 
-$i = 1; while ($row = mysqli_fetch_array($tasks)) { ?>
-<tr>
-<td> <?php echo $i; ?> </td>
-<td class="task"> <?php echo $row['task']; ?> </td>
-<td class="delete">
-<a href="index.php?del_task=<?php echo $row['id'] ?>">x</a>
-</td>
-</tr>
-<?php $i++; } ?>
-</tbody>
-</table>
-<?php } ?>
 </body>
 </html>
