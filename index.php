@@ -66,7 +66,7 @@
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="style.css">
-	<title>TO DO</title>
+	<title>TO DO App</title>
 </head>
 <body>
 	<?php if (isset($_SESSION['message'])): ?>
